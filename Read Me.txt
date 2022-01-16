@@ -1,0 +1,8 @@
+In cmd or anaconda prompt:
+
+python  *.py
+
+it includes Gan and FedGAN  attacks and Krum and Median defenses.
+
+The preprocessed dataset is achievable from our previous publications (the same 1st and 2dn author names) in FGCS and NCAA source codes.
+
