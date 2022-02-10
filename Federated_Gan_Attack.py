@@ -132,7 +132,7 @@ def relevant_features(data, response_vector, features):
     ranked_index=list()
     
     model =RandomForestRegressor()
-    rfe = RFE(model, 1)
+    rfe = RFE(model)
     fit = rfe.fit(data, response_vector)
     old_features=features
 
