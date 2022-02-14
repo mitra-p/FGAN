@@ -60,6 +60,77 @@ from tensorflow.python.util import _pywrap_nest
 from tensorflow.python.util import _pywrap_utils
 from tensorflow.python.util.compat import collections_abc as _collections_abc
 from tensorflow.python.util.tf_export import tf_export
+from tensorflow.python import pywrap_tfe
+from tensorflow.python.eager import backprop_util
+from tensorflow.python.ops import resource_variable_ops, variables
+from tensorflow.python.ops import default_gradient
+from tensorflow.python.ops.unconnected_gradients import UnconnectedGradients
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import check_ops
+from tensorflow.python.ops import control_flow_util
+from tensorflow.python.ops import default_gradient
+from tensorflow.python.ops import gen_array_ops
+from tensorflow.python.ops import gen_math_ops
+from tensorflow.python.ops import math_ops
+from tensorflow.python.util import _pywrap_utils
+from tensorflow.python.util import nest
+from tensorflow.python import pywrap_tfe
+from tensorflow.python.eager import backprop_util
+from tensorflow.python.eager import context
+from tensorflow.python.eager import execute
+from tensorflow.python.eager import imperative_grad
+from tensorflow.python.eager import tape
+from tensorflow.python.framework import constant_op
+from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import indexed_slices
+from tensorflow.python.framework import ops
+from tensorflow.python.framework import tensor_shape
+from tensorflow.python.framework import tensor_util
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import check_ops
+from tensorflow.python.ops import control_flow_util
+from tensorflow.python.ops import default_gradient
+from tensorflow.python.ops import gen_array_ops
+from tensorflow.python.ops import gen_math_ops
+from tensorflow.python.ops import math_ops
+import functools
+import operator
+import sys
+
+import six
+
+from tensorflow.python import pywrap_tensorflow
+from tensorflow.python.eager import context
+from tensorflow.python.eager import execute
+from tensorflow.python.eager import imperative_grad
+from tensorflow.python.eager import tape
+from tensorflow.python.framework import constant_op
+from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import ops
+from tensorflow.python.framework import tensor_shape
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import check_ops
+from tensorflow.python.ops import gen_array_ops
+from tensorflow.python.ops import gen_math_ops
+from tensorflow.python.ops import math_ops
+from tensorflow.python.ops import resource_variable_ops
+from tensorflow.python.ops.unconnected_gradients import UnconnectedGradients
+from tensorflow.python.platform import tf_logging as logging
+from tensorflow.python.util import nest
+from tensorflow.python.util import tf_contextlib
+from tensorflow.python.util import tf_inspect
+from tensorflow.python.util.lazy_loader import LazyLoader
+from tensorflow.python.util.tf_export import tf_export
+import wrapt as _wrapt
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(BASE_DIR)
+sys.path.append(os.path.join(ROOT_DIR, 'modules'))
+sys.path.append(os.path.join(ROOT_DIR, 'modules/tf_ops/nn_distance'))
+sys.path.append(os.path.join(ROOT_DIR, 'modules/tf_ops/approxmatch'))
+strategy = tf.distribute.get_strategy()
+
+
+
 
 #******************************************************************************
 CLASS = 'class'
@@ -337,27 +408,28 @@ def main():
     
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_samples = generator(noise, training=True)
-            flat_fake_output = []
-            flat_targets=[]
-    def nest():
-       return nest
-    target=disc_loss, malicious_discriminator.trainable_variables
-            
-    for t in nest.flatten(target):
+    
+    def nest():       
+     for t in nest.flatten(gradient):
          if not backprop_util.IsTrainable(t):
           logging.vlog(
           logging.WARN, "The dtype of the target tensor must be "
             "floating (e.g. tf.float32) when calling GradientTape.gradient, "
             "got %r", t.dtype)
          if resource_variable_ops.is_resource_variable(t):
-          with self:
+          
             t = ops.convert_to_tensor(t)
+         flat_targets=[]
          flat_targets.append(t)
-
-    flat_sources = nest.flatten(source_from_cache)
-    flat_sources_raw = flat_sources
-    flat_sources = [_handle_or_self(x) for x in flat_sources]
-    for t in flat_sources_raw:
+def _handle_or_self(x):
+  """If x is ResourceVariable, return its handle, else x."""
+  if resource_variable_ops.is_resource_variable(x):
+    x = x.handle
+  return x
+  flat_sources = nest.flatten(source_from_cache)
+  flat_sources_raw = flat_sources
+  flat_sources = [_handle_or_self(x) for x in flat_sources]
+  for t in flat_sources_raw:
       if not backprop_util.IsTrainable(t):
         logging.vlog(
             logging.WARN, "The dtype of the source tensor must be "
@@ -368,24 +440,32 @@ def main():
             "GradientTape.gradient is not supported on packed EagerTensors yet."
         )
 
-    if output_gradients is not None:
+  if output_gradients is not None:
       output_gradients = [None if x is None else ops.convert_to_tensor(x)
                           for x in nest.flatten(output_gradients)]
-
-    flat_grad = imperative_grad.imperative_grad(
-        self._tape,
-        flat_targets,
-        flat_sources,
-        output_gradients=output_gradients,
-        sources_raw=flat_sources_raw,
-        unconnected_gradients=unconnected_gradients)
-
+def __init__(self):
     if not Self._persistent:
       # Keep track of watched variables before setting tape to None
       self._watched_variables = SelfReg._tape.watched_variables()
       self._tape = None
+   
+      flat_targets=[]
+      flat_sources = nest.flatten(variables)
+      flat_sources_raw = flat_sources
+      flat_grad = imperative_grad.imperative_grad(
+        self._tape,
+        flat_targets,
+        flat_sources,
+        output_gradients=(),
+        sources_raw=flat_sources_raw,
+        unconnected_gradients=None)
 
-    grad = nest.pack_sequence_as(source_synopsis, flat_grad)
+    if not self._persistent:
+      # Keep track of watched variables before setting tape to None
+      self._watched_variables = self._tape.watched_variables()
+      self._tape = None
+
+    grad = nest.pack_sequence_as(variables, flat_grad)
     return grad
 
     def jacobian(self,
