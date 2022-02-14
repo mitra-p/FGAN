@@ -49,6 +49,11 @@ from numpy import *
 import os.path as osp
 import scipy.sparse as sp
 import pickle
+from tensorflow.python.platform import tf_logging
+from tensorflow.python.util import _pywrap_nest
+from tensorflow.python.util import _pywrap_utils
+from tensorflow.python.util.compat import collections_abc as _collections_abc
+from tensorflow.python.util.tf_export import tf_export
 
 #******************************************************************************
 CLASS = 'class'
@@ -326,18 +331,75 @@ def main():
     
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_samples = generator(noise, training=True)
+            flat_fake_output = []
+            flat_targets=[]
+    def nest():
+       return nest
+    target=(disc_loss, malicious_discriminator.trainable_variables
             
+    for t in nest.flatten(target):
+         if not backprop_util.IsTrainable(t):
+          logging.vlog(
+          logging.WARN, "The dtype of the target tensor must be "
+            "floating (e.g. tf.float32) when calling GradientTape.gradient, "
+            "got %r", t.dtype)
+         if resource_variable_ops.is_resource_variable(t):
+          with self:
+            t = ops.convert_to_tensor(t)
+        flat_targets.append(t)
+
+    flat_sources = nest.flatten(sources)
+    flat_sources_raw = flat_sources
+    flat_sources = [_handle_or_self(x) for x in flat_sources]
+    for t in flat_sources_raw:
+      if not backprop_util.IsTrainable(t):
+        logging.vlog(
+            logging.WARN, "The dtype of the source tensor must be "
+            "floating (e.g. tf.float32) when calling GradientTape.gradient, "
+            "got %r", t.dtype)
+      if getattr(t, "is_packed", False):
+        raise ValueError(
+            "GradientTape.gradient is not supported on packed EagerTensors yet."
+        )
+
+    if output_gradients is not None:
+      output_gradients = [None if x is None else ops.convert_to_tensor(x)
+                          for x in nest.flatten(output_gradients)]
+
+    flat_grad = imperative_grad.imperative_grad(
+        self._tape,
+        flat_targets,
+        flat_sources,
+        output_gradients=output_gradients,
+        sources_raw=flat_sources_raw,
+        unconnected_gradients=unconnected_gradients)
+
+    if not self._persistent:
+      # Keep track of watched variables before setting tape to None
+      self._watched_variables = self._tape.watched_variables()
+      self._tape = None
+
+    grad = nest.pack_sequence_as(sources, flat_grad)
+    return grad
+
+    def jacobian(self,
+               target,
+               sources,
+               unconnected_gradients=UnconnectedGradients.NONE,
+               parallel_iterations=None,
+               experimental_use_pfor=True): 
+
             real_output = malicious_discriminator(data_sample_batch, training=False)
             fake_output = malicious_discriminator(generated_samples, training=False)
             
             gen_loss = generator_loss(fake_output)
             disc_loss = discriminator_loss(real_output, fake_output, real_labels =data_labels)
     
-        gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
-        gradients_of_discriminator = disc_tape.gradient(disc_loss, malicious_discriminator.trainable_variables)
+            gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
+            gradients_of_discriminator = disc_tape.gradient(disc_loss, malicious_discriminator.trainable_variables)
     
-        generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
-        discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, malicious_discriminator.trainable_variables))
+            generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
+            discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, malicious_discriminator.trainable_variables))
 
     def train(dataset, labels, epochs):
         for epoch in range(epochs):
